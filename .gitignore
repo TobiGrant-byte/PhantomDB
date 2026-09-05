@@ -1,0 +1,5 @@
+*.pdb
+*.wal
+*.exe
+*.pem
+server_log.txt
