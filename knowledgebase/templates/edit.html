@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><title>Edit {{.Title}}</title></head>
+<body>
+	<a href="/notes/{{.ID}}">← Cancel</a>
+	<h1>Edit Note</h1>
+	<form method="POST" action="/notes/{{.ID}}">
+		<input name="title" value="{{.Title}}" required>
+		<br>
+		<textarea name="content" required>{{.Content}}</textarea>
+		<br>
+		<button type="submit">Save</button>
+	</form>
+</body>
+</html>

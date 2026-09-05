@@ -1,12 +1,16 @@
 package phantomdb
 
-import "errors"
+import (
+	"errors"
+	"sync"
+)
 
 type DB struct {
 	disk   *DiskManager
 	buffer *BufferPool
 	wal    *WAL
 	tree   *BTree
+	mu     sync.RWMutex // NEW — guards every operation below
 }
 
 func Open(path string) (*DB, error) {
@@ -30,7 +34,7 @@ func Open(path string) (*DB, error) {
 		if rec.Op == WALOpDelete {
 			err := tree.Delete(rec.Key)
 			if err == ErrKeyNotFound {
-				return nil // already gone — not an error during replay
+				return nil
 			}
 			return err
 		}
@@ -43,6 +47,9 @@ func Open(path string) (*DB, error) {
 }
 
 func (db *DB) Put(key, value []byte) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
 	if len(key) == 0 || len(key) > MaxKeySize {
 		return errors.New("invalid key size")
 	}
@@ -56,14 +63,31 @@ func (db *DB) Put(key, value []byte) error {
 }
 
 func (db *DB) Get(key []byte) ([]byte, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
 	return db.tree.Search(key)
 }
 
 func (db *DB) Scan(start, end []byte) ([]KVPair, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
 	return db.tree.Scan(start, end)
 }
 
+func (db *DB) Delete(key []byte) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if err := db.wal.Append(WALRecord{Op: WALOpDelete, Key: key}); err != nil {
+		return err
+	}
+	return db.tree.Delete(key)
+}
+
 func (db *DB) Checkpoint() error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
 	if err := db.buffer.FlushAll(); err != nil {
 		return err
 	}
@@ -71,19 +95,17 @@ func (db *DB) Checkpoint() error {
 }
 
 func (db *DB) Close() error {
-	if err := db.Checkpoint(); err != nil {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if err := db.buffer.FlushAll(); err != nil {
+		return err
+	}
+	if err := db.wal.Truncate(); err != nil {
 		return err
 	}
 	if err := db.wal.Close(); err != nil {
 		return err
 	}
 	return db.disk.Close()
-}
-
-
-func (db *DB) Delete(key []byte) error {
-	if err := db.wal.Append(WALRecord{Op: WALOpDelete, Key: key}); err != nil {
-		return err
-	}
-	return db.tree.Delete(key)
 }

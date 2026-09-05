@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head><title>Results</title></head>
+<body>
+	<a href="/">← Back</a>
+	<h1>Results</h1>
+	<ul>
+	{{range .}}
+		<li><a href="/notes/{{.ID}}">{{.Title}}</a></li>
+	{{end}}
+	</ul>
+</body>
+</html>

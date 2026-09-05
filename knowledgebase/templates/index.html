@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Knowledge Base</title>
+	<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+	<h1>Notes</h1>
+
+	<input type="search" name="q" placeholder="Search notes..."
+		hx-get="/search"
+		hx-trigger="keyup changed delay:300ms"
+		hx-target="#note-list"
+		hx-swap="innerHTML">
+
+	<form method="POST" action="/notes">
+		<input name="title" placeholder="Title" required>
+		<br>
+		<textarea name="content" placeholder="Content" required></textarea>
+		<br>
+		<button type="submit">Create Note</button>
+	</form>
+	<hr>
+	<ul id="note-list">
+	{{range .}}
+		<li id="note-{{.ID}}">
+			<a href="/notes/{{.ID}}">{{.Title}}</a>
+			<button hx-delete="/notes/{{.ID}}"
+				hx-confirm="Delete this note?"
+				hx-target="#note-{{.ID}}"
+				hx-swap="outerHTML">
+				Delete
+			</button>
+		</li>
+	{{end}}
+	</ul>
+</body>
+</html>

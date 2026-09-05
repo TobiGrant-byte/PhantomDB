@@ -28,16 +28,23 @@ func tokenize(text string) []string {
 	return out
 }
 
-func (db *DB) SearchText(word string) ([]string, error) {
-	word = strings.ToLower(word)
-	pairs, err := db.Scan([]byte("idx:"+word+":"), []byte("idx:"+word+":\xff"))
+func (db *DB) SearchText(prefix string) ([]string, error) {
+	prefix = strings.ToLower(prefix)
+	if prefix == "" {
+		return nil, nil
+	}
+
+	pairs, err := db.Scan([]byte("idx:"+prefix), []byte("idx:"+prefix+"\xff"))
 	if err != nil {
 		return nil, err
 	}
+
+	seen := make(map[string]bool)
 	var docIDs []string
 	for _, p := range pairs {
 		parts := strings.SplitN(string(p.Key), ":", 3)
-		if len(parts) == 3 {
+		if len(parts) == 3 && !seen[parts[2]] {
+			seen[parts[2]] = true
 			docIDs = append(docIDs, parts[2])
 		}
 	}

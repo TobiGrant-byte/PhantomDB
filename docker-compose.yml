@@ -1,0 +1,23 @@
+services:
+  phantomdb-server:
+    build:
+      context: .
+      dockerfile: phantomdb-server/Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - phantomdb-data:/app/data
+      - ./phantomdb-server/cert.pem:/app/cert.pem
+      - ./phantomdb-server/key.pem:/app/key.pem
+    command: >
+      ./phantomdb-server
+      --db /app/data/phantomdb-data
+      --port 8080
+      --tls
+      --cert /app/cert.pem
+      --key /app/key.pem
+
+volumes:
+  phantomdb-data:
+    external: true
+    name: phantomdb-data

@@ -1,0 +1,11 @@
+{{range .}}
+	<li id="note-{{.ID}}">
+		<a href="/notes/{{.ID}}">{{.Title}}</a>
+		<button hx-delete="/notes/{{.ID}}"
+			hx-confirm="Delete this note?"
+			hx-target="#note-{{.ID}}"
+			hx-swap="outerHTML">
+			Delete
+		</button>
+	</li>
+{{end}}

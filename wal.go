@@ -7,8 +7,10 @@ import (
 )
 
 const (
-	WALOpPut    byte = 1
-	WALOpDelete byte = 2
+	WALOpPut      byte = 1
+	WALOpDelete   byte = 2
+	WALOpTxBegin  byte = 3
+	WALOpTxCommit byte = 4
 )
 
 type WALRecord struct {
